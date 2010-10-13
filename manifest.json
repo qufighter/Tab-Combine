@@ -1,0 +1,15 @@
+{
+   "description": "Allows you to combine multiple google searches by swapping tab positions 3 times",
+   "name": "Tab Combine",
+   "background_page": "background.html",
+   "options_page": "options.html",
+   "icons": { "16": "icon16.png",
+           "32": "icon32.png",
+           "48": "icon48.png",
+           "64": "icon64.png",
+          "128": "icon128.png" },
+   "permissions": [
+				  "http://vidzbigger.com/","tabs"
+				],
+   "version": "0.0.1.20"
+}

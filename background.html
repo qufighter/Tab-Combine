@@ -1,0 +1,104 @@
+<html>
+  <script>
+		function fromPrefs(){
+			
+			var hist0='';
+			var hist1='';
+			var hist2='';
+			var hist3='';
+			
+			function resetHistory(){
+				hist0='',hist1='',hist2='',hist3='';
+			}
+			
+			function pushHistory(tbs){
+				hist3=hist2,hist2=hist1,hist1=hist0,hist0=tbs;
+			}
+			
+			function historyIsCycle(){
+				return hist3==hist1 && hist2==hist0;
+			}
+			
+			function parseURL(ur){
+				var urlo={};
+				var qs=ur.split('?');
+				urlo.location=qs[0];
+				urlo.querystring=qs[1];
+				urlo.get={};
+				if(qs[1]){
+					var prams=qs[1].split('&');
+					for(var p=0,l=prams.length;p<l;p++){
+						var nv=prams[p].split('=');
+						urlo.get[nv[0]]=nv[1]
+					}
+				}
+				return urlo;
+			}
+			
+			function buildURL(urlo){
+				var s=urlo.location;
+				if(urlo.get){
+					s+='?';
+					for(i in urlo.get){
+						s+=i+'='+urlo.get[i]+'&';
+					}
+					s=s.substr(0,s.length-1);
+				}
+				return s;
+			}
+			
+			function tabURLmatch(ur,t1,t2){
+				return t1.url.indexOf(ur)>-1 && t2.url.indexOf(ur)>-1;
+			}
+			
+			function tabCombine(t1,t2){
+				t1.purl=parseURL(t1.url);
+				t2.purl=parseURL(t2.url);
+				if(tabURLmatch('http://www.google.com/search',t1,t2)){
+					console.log('googl');
+					//console.log(t1.purl.get.q+' '+t2.purl.get.q);
+					
+					t1.purl.get.q=t1.purl.get.q+'+'+t2.purl.get.q;
+					//console.log(buildURL(t1.purl));
+					
+					chrome.tabs.update(t1.id, {url:buildURL(t1.purl)}, function(){console.log('tab 1 was navigated')})
+					chrome.tabs.remove(t2.id, function(){console.log('tab 2 was closed')});
+				}
+				if(tabURLmatch('http://www.youtube.com',t1,t2)){
+					console.log('youtub');
+					console.log(t1.purl.get.v+' '+t2.purl.get.v);
+				}
+				
+				console.log(t1.url )
+						console.log(t2.url )
+			}
+			
+			chrome.tabs.onMoved.addListener(function(tabId,moveInfo) {
+				chrome.tabs.getAllInWindow(null, function(tabs) {
+					var tbs='',tbidx={};
+					for(var t=0,l=tabs.length;t<l;t++){
+						tbs+=tabs[t].id+',';
+						tbidx[tabs[t].id]=tabs[t];
+					}
+					pushHistory(tbs)
+					
+					if(historyIsCycle()){						
+						var h0=hist0.split(','),h1=hist1.split(','),t1,t2,t=0,l=tabs.length;
+						for(;t<l;t++){
+							if(h0[t]!=h1[t] && tabId != h0[t]){
+								t1=tabId;
+								t2=h0[t];
+							}
+						}
+						
+						tabCombine(tbidx[t1],tbidx[t2])
+						resetHistory();
+					}
+					
+				});
+				
+			});
+		}
+  </script>
+  <body onload="fromPrefs()"></body>
+</html>
